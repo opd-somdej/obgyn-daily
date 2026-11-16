@@ -80,7 +80,7 @@ function computeDay(day, unitId) {
       var cs = (day && day.cases || []).filter(function (x) { return x.unit === unitId && x.type === it.link; });
       if (cs.length) { linked = true; p = [cs.filter(function (x) { return x.period !== 'pm'; }).length, cs.filter(function (x) { return x.period === 'pm'; }).length]; }
     }
-    return { id: it.id, name: it.name, active: it.active, link: it.link, linked: linked, am: p[0], pm: p[1], total: p[0] + p[1] };
+    return { id: it.id, name: it.name, active: it.active, custom: !!it.custom, link: it.link, linked: linked, am: p[0], pm: p[1], total: p[0] + p[1] };
   });
   var kpis = itemsFor('kpi', unitId, data, 'kp').map(function (it) { var v = (data.kp || {})[it.id]; return { id: it.id, name: it.name, type: it.type, active: it.active, value: v == null ? '' : String(v) }; });
   var roster = staffFor(unitId), sel = data.st || [], selIdx = {};
@@ -142,8 +142,8 @@ function reportText(m, opt) {
     L.push(''); L.push('ผู้ป่วยส่งต่อ ' + cs.length + ' ราย');
     cs.forEach(function (c) { L.push('• ' + c.type + (opt.names ? ' · ' + (c.name || '') + (c.hn ? ' HN ' + c.hn : '') : '') + (c.dx ? ' · ' + c.dx : '') + (c.dest ? ' → ' + c.dest : '')); });
   }
-  var pos = S.boot.positions || ['GN', 'PN', 'NA'], st = pos.map(function (p) { return p + ' ' + fmt(m.staffN[p] || 0); }).join(' · ');
-  L.push(''); L.push('เจ้าหน้าที่ ' + st);
+  var pos = (S.boot.positions || ['GN', 'PN', 'NA']).filter(function (p) { return (m.staffN[p] || 0) > 0; }), st = pos.map(function (p) { return p + ' ' + fmt(m.staffN[p] || 0); }).join(' · ');
+  if (st) { L.push(''); L.push('เจ้าหน้าที่ ' + st); }
   if (opt.staffNames) pos.forEach(function (p) { var t = staffText(m, p); if (t) L.push(p + ': ' + t); });
   if (m.prob) { L.push(''); L.push('ปัญหาที่พบ: ' + m.prob); }
   if (m.note) L.push('หมายเหตุ: ' + m.note);

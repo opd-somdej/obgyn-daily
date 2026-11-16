@@ -54,11 +54,11 @@ function paneItems(p) {
     var ex = k === 'kpi' ? '<td><select data-f="type"><option value="num"' + (x.type !== 'pct' ? ' selected' : '') + '>จำนวน</option><option value="pct"' + (x.type === 'pct' ? ' selected' : '') + '>ร้อยละ</option></select></td>'
       : k === 'extra' ? '<td><label class="sw"><input type="checkbox" data-f="countIn"' + (x.countIn ? ' checked' : '') + '><i></i></label></td><td><input data-f="special" value="' + esc(x.special) + '" placeholder="—" class="w12"></td>'
         : k === 'proc' ? '<td><select data-f="link"><option value="">—</option>' + caseTypes.map(function (t) { return '<option' + (t === x.link ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select></td>' : '';
-    return '<tr data-id="' + esc(x.id) + '">' + MV + '<td><input data-f="name" value="' + esc(x.name) + '" placeholder="ชื่อรายการ"></td><td>' + unitSel(x.unit, true, 'u') + '</td>' + ex + '<td><label class="sw"><input type="checkbox" data-f="active"' + (x.active ? ' checked' : '') + '><i></i></label></td><td>' + (x.id ? '' : '<button class="icon-btn sm" data-del aria-label="ลบ">' + ic('trash') + '</button>') + '</td></tr>';
+    return '<tr data-id="' + esc(x.id) + '"' + (x.custom ? ' data-cu="1"' : '') + '>' + MV + '<td><input data-f="name" value="' + esc(x.name) + '" placeholder="ชื่อรายการ">' + (x.custom && x.id ? '<span class="tag cu" title="พยาบาล/แอดมินเพิ่มจากหน้าบันทึก">เพิ่มเอง</span>' : '') + '</td><td>' + unitSel(x.unit, true, 'u') + '</td>' + ex + '<td><label class="sw"><input type="checkbox" data-f="active"' + (x.active ? ' checked' : '') + '><i></i></label></td><td>' + (x.id ? '' : '<button class="icon-btn sm" data-del aria-label="ลบ">' + ic('trash') + '</button>') + '</td></tr>';
   };
   p.innerHTML = '<div class="seg" id="kinds">' + KINDS.map(function (x) { return '<button data-k="' + x[0] + '" class="' + (x[0] === k ? 'on' : '') + '">' + x[1] + '</button>'; }).join('') + '</div>' +
     '<section class="card"><div class="card-h"><h2>' + esc(KINDS.filter(function (x) { return x[0] === k; })[0][1]) + '</h2><span class="hint">' +
-    ({ proc: 'ใช้ชุดเดียวกันทั้งรายวันและรายเดือน · ปิดใช้แทนการลบ (ข้อมูลเก่ายังอยู่)', extra: 'ผู้ป่วยที่ไม่มีใน HIS ของคลินิก เช่น CH · Ward · LAB', kpi: 'ร้อยละ = รายเดือนแสดงค่าเฉลี่ย · จำนวน = รวม', 'case': 'ใช้ในรายชื่อผู้ป่วยส่งต่อ' })[k] + '</span></div>' +
+    ({ proc: 'ใช้ชุดเดียวกันทั้งรายวันและรายงาน · พยาบาลเพิ่มจากหน้าบันทึกได้ (ขึ้นป้าย เพิ่มเอง · ใช้เฉพาะหน่วยที่เพิ่ม) · หน่วยงานว่าง = ใช้ทุกหน่วย · ปิดใช้แทนการลบ (ข้อมูลเก่ายังอยู่)', extra: 'ผู้ป่วยที่ไม่มีใน HIS ของคลินิก เช่น CH · Ward · LAB', kpi: 'ร้อยละ = รายเดือนแสดงค่าเฉลี่ย · จำนวน = รวม', 'case': 'ใช้ในรายชื่อผู้ป่วยส่งต่อ' })[k] + '</span></div>' +
     '<div class="tbl-wrap"><table class="tbl edit" id="tItems"><thead><tr><th></th><th>ชื่อ</th><th>หน่วยงาน</th>' + extraCols + '<th>ใช้งาน</th><th></th></tr></thead><tbody>' + list.map(row).join('') + '</tbody></table></div>' +
     '<div class="pad-x"><button class="btn sm ghost" id="addItem">' + ic('plus') + 'เพิ่มรายการ</button></div>' + saveBtn('saveItems') + '</section>';
   bindMove(p);
@@ -67,7 +67,7 @@ function paneItems(p) {
   $('#saveItems').onclick = function () {
     var btn = this, items = $$('#tItems tbody tr').map(function (tr) {
       var g = function (f) { var e = $('[data-f="' + f + '"]', tr); return e ? (e.type === 'checkbox' ? e.checked : e.value) : undefined; };
-      return { id: tr.dataset.id, name: g('name'), unit: $('select.u', tr).value, active: g('active'), type: g('type'), countIn: g('countIn'), special: g('special'), link: g('link'), custom: !tr.dataset.id };
+      return { id: tr.dataset.id, name: g('name'), unit: $('select.u', tr).value, active: g('active'), type: g('type'), countIn: g('countIn'), special: g('special'), link: g('link'), custom: !tr.dataset.id || tr.dataset.cu === '1' };
     }).filter(function (x) { return x.name && x.name.trim(); });
     busy(btn, true); api('saveItems', { kind: k, items: items, _rid: rid() }).then(reboot).then(function () { busy(btn, false); toast('บันทึกแล้ว', 'ok'); paneItems(p); }).catch(function (e) { busy(btn, false); toast(e.message, 'err'); });
   };
